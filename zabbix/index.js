@@ -1,16 +1,16 @@
 'use strict';
 
 const util = require('util')
-const zabbixAPI = require('zabbix-api');
+const ZabbixAPI = require('./classes/ZabbixAPI');
+
 
 
 class Zabbix {
     constructor(davis, options) {
         this.davis = davis;
         this.options = options;
-        this.zbx = new zabbixAPI(process.env.ZABBIX_USER, process.env.ZABBIX_PASSWORD, 'http://zabbix-server01.dc.nova/zabbix/api_jsonrpc.php');
 
-        console.log(this.zbx)
+        this.zabbixApi = new ZabbixAPI(davis);
 
         this.intents = {
             zabbix: {
@@ -41,21 +41,13 @@ class Zabbix {
     gatherData(exchange) {
 
         const isTriggers = /[tT]rigger/i.test(exchange.getRawRequest());
-        console.log(isTriggers)
+
+        if (isTriggers) {
+            this.zabbixApi.createTriggers();
+        }
 
 
-        this.zbx.request('trigger.get', {
-            filter: {
-                value: 1
-            },
-            selectHosts: 'extend'
-        }, function(err, res) {
-            if (err) {
-                console.log(err.message);
-            } else {
-                // console.log(res);
-            }
-        });
+
 
         const tense = this.davis.utils.getTense(exchange);
         console.log(util.inspect(exchange.getRawRequest(), false, null))
