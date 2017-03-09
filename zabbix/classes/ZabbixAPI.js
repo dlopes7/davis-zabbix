@@ -21,7 +21,7 @@ class ZabbixAPI {
         var host = undefined;
         try {
 
-            host = /d[ao] ([a-zA-z0-9]+)$/.exec(text)[1];
+            host = /d[ao] (.*)/.exec(text)[1];
             this.logger.debug(`Found the host "${host}"`);
 
         } catch (err) {
@@ -55,16 +55,48 @@ class ZabbixAPI {
 
     }
 
-    getItems(exchange) {
-
-
+    getItemValue(exchange, callback) {
+        var itemValue = undefined;
 
         const host = this.getHostFromText(exchange.getRawRequest());
         const metric = this.getMetricFromText(exchange.getRawRequest());
 
+        const zabbix_metrics = {
+            cpu: 'Processor Time',
+            memory: 'vm.memory.size[pused]'
+        }
+
+        const eContext = {
+            metric: metric,
+            host: host
+        };
+
+        exchange.addExchangeContext(eContext);
+
         console.log(`Host: ${host}, Metric: ${metric}`);
 
+        return this.zbx.requestAsync('item.get', {
+                filter: {
+                    host: host.toUpperCase()
+                },
+                search: {
+                    key_: zabbix_metrics[metric]
+                },
+                selectHosts: 'extend'
+            })
+            .catch((err) => { console.log(`ZABBIX API - item.get - ${err}`); })
+            .then((res) => {
+                itemValue = res[0].lastvalue;
+                console.log(`Host: ${host}, Metric: ${metric}: ${itemValue}`);
+                return {
+                    host: host,
+                    metric: metric,
+                    value: itemValue
+                };
+            });
     }
+
+
 
     createTriggers() {
         var current = Promise.resolve();

@@ -1,0 +1,1 @@
+The server <b>{{ zabbixResponse.host }}</b>'s <b>{{ zabbixResponse.metric }}</b> is at <b>{{ zabbixResponse.value }}%</b> . 

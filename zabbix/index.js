@@ -45,25 +45,26 @@ class Zabbix {
         const isTriggers = /[tT]rigger/i.test(exchange.getRawRequest());
         const isItems = /^[zZ]abbix/i.test(exchange.getRawRequest());
 
-        if (isTriggers) {
-            this.zabbixApi.createTriggers();
-        }
+
         if (isItems) {
-            this.zabbixApi.getItems(exchange);
+
+            return this.zabbixApi.getItemValue(exchange)
+                .then((res) => {
+
+                    exchange.addContext({ zabbixResponse: res });
+                    console.log('Item value', res);
+                    return exchange;
+                });
         }
-
-        const tense = this.davis.utils.getTense(exchange);
-        console.log(util.inspect(exchange.getRawRequest(), false, null))
-        console.log(util.inspect(tense));
-
-        //fs.writeFileSync('../exchange.json', util.inspect(exchange, false, null), 'utf-8');
     }
 
-    respond(exchange) {
-        //const tense = this.davis.utils.getTense(exchange);
-        //console.log(exchange);
-        exchange.response('Porra nenhuma irmão!');
+    respond(exchange, context) {
+        const templates = this.davis.pluginManager.responseBuilder.getTemplates(this);
+
+        exchange.response(templates) // respond to the user
+            .smartEnd(); // end the conversation if appropriate
     }
+
 }
 
 module.exports = Zabbix;
